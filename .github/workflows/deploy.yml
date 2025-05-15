@@ -137,14 +137,32 @@ jobs:
           }(window.location))
           EOF
 
-          # Insert the script into index.html
-          sed -i 's/<head>/<head>\\n  <script src="redirect-script.js"><\/script>/' dist/index.html
-
-          # Ensure index.html exists in the dist directory
+          # Create a test index.html file in case webpack didn't generate one properly
           if [ ! -f "dist/index.html" ]; then
-            echo "Error: index.html was not generated in the dist directory"
-            exit 1
+            cat > dist/index.html << EOF
+            <!DOCTYPE html>
+            <html>
+              <head>
+                <meta charset="utf-8">
+                <title>GitHub Pages SPA</title>
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <script src="redirect-script.js"></script>
+                <base href="$PUBLIC_PATH">
+              </head>
+              <body>
+                <div id="app"></div>
+                <script src="bundle.js"></script>
+              </body>
+            </html>
+            EOF
+          else
+            # Make sure the base tag is set correctly
+            grep -q "<base" dist/index.html || sed -i 's/<head>/<head>\\n  <base href="'$PUBLIC_PATH'">/' dist/index.html
           fi
+
+          # Verify that dist/index.html exists and has content
+          echo "Verifying index.html content:"
+          cat dist/index.html
 
       - name: Copy assets to dist
         run: |

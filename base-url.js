@@ -4,7 +4,6 @@ export const getBaseUrl = () => {
     return "";
   }
 
-  // In production, use the exact path for GitHub Pages
-  // This must match the repository name
-  return "/c-v/";
+  // In production, use the path from the environment
+  return process.env.PUBLIC_PATH || "/";
 };
