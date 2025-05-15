@@ -14,8 +14,8 @@ module.exports = {
     path: path.resolve(__dirname, "dist"),
     filename: "bundle.js",
     clean: true,
-    // Default publicPath for development
     publicPath: "/",
+    assetModuleFilename: "assets/[name][ext]",
   },
   resolve: {
     extensions: [".ts", ".tsx", ".js", ".jsx", ".json"],
@@ -58,8 +58,34 @@ module.exports = {
         ],
       },
       {
-        test: /\.(png|jpe?g|gif|svg)$/i,
+        test: /\.(png|jpe?g|webp)$/i,
         type: "asset/resource",
+        generator: {
+          filename: "assets/[name][ext]",
+        },
+        use: [
+          {
+            loader: "image-webpack-loader",
+            options: {
+              mozjpeg: {
+                quality: 80,
+              },
+              pngquant: {
+                quality: [0.6, 0.8],
+              },
+              webp: {
+                quality: 80,
+              },
+            },
+          },
+        ],
+      },
+      {
+        test: /\.svg$/i,
+        type: "asset/resource",
+        generator: {
+          filename: "assets/[name][ext]",
+        },
       },
     ],
   },
@@ -79,21 +105,24 @@ module.exports = {
           from: "public",
           to: "",
           globOptions: {
-            ignore: ["**/index.html"], // Ignore index.html from public folder
+            ignore: ["**/index.html"],
           },
+        },
+        {
+          from: "src/assets",
+          to: "assets",
+          noErrorOnMissing: true,
         },
       ],
     }),
-    // Add DefinePlugin to define environment variables
     new webpack.DefinePlugin({
       "process.env.PUBLIC_PATH": JSON.stringify(process.env.PUBLIC_PATH || "/"),
       "process.env.NODE_ENV": JSON.stringify(
         process.env.NODE_ENV || "development"
       ),
     }),
-    // Add Dotenv plugin to load environment variables
     new Dotenv({
-      systemvars: true, // load all system variables
+      systemvars: true,
     }),
   ],
   devtool: isProduction ? "source-map" : "eval-source-map",

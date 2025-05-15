@@ -1,8 +1,6 @@
 import { useState, useEffect, useRef } from "preact/hooks";
-import { h } from "preact";
 import AnimatedSVG from "./SVGCanvas";
 
-// Define a simple MediaQuery hook
 const useMediaQuery = (query: string): boolean => {
   const [matches, setMatches] = useState(false);
 
@@ -21,7 +19,6 @@ const useMediaQuery = (query: string): boolean => {
   return matches;
 };
 
-// Define slide content structure
 interface SlideContent {
   pageNumber: number;
   title: string;
@@ -33,52 +30,9 @@ interface SlideContent {
   customStyles?: Record<string, string>;
 }
 
-// Define presentation props interface
 interface PresentationProps {
   baseUrl: string;
 }
-
-// Define slide transition variants
-const slideVariants = {
-  enter: (direction: number) => ({
-    x: direction > 0 ? "100%" : "-100%",
-    opacity: 0,
-    scale: 0.8,
-  }),
-  center: {
-    x: 0,
-    opacity: 1,
-    scale: 1,
-    transition: {
-      x: { type: "spring", stiffness: 300, damping: 30 },
-      opacity: { duration: 0.5 },
-      scale: { duration: 0.5 },
-    },
-  },
-  exit: (direction: number) => ({
-    x: direction < 0 ? "100%" : "-100%",
-    opacity: 0,
-    scale: 0.8,
-    transition: {
-      x: { type: "spring", stiffness: 300, damping: 30 },
-      opacity: { duration: 0.5 },
-      scale: { duration: 0.5 },
-    },
-  }),
-};
-
-// Content reveal animations
-const contentVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: (custom: number) => ({
-    opacity: 1,
-    y: 0,
-    transition: {
-      delay: custom * 0.1,
-      duration: 0.5,
-    },
-  }),
-};
 
 interface SwipeHandlers {
   onTouchStart: (e: TouchEvent) => void;
@@ -96,12 +50,13 @@ const Presentation = ({ baseUrl }: PresentationProps) => {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [touchStart, setTouchStart] = useState(0);
   const [touchEnd, setTouchEnd] = useState(0);
+  const [imageLoading, setImageLoading] = useState(true);
   const presentationRef = useRef<HTMLDivElement>(null);
   const progressRef = useRef<HTMLDivElement>(null);
   const autoPlayTimerRef = useRef<number | null>(null);
   const isMobile = useMediaQuery("(max-width: 768px)");
+  const isTablet = useMediaQuery("(max-width: 1024px)");
 
-  // Define the slides content with proper baseUrl handling
   const slides: SlideContent[] = [
     {
       pageNumber: 1,
@@ -207,23 +162,24 @@ const Presentation = ({ baseUrl }: PresentationProps) => {
 
   const slide = slides[currentSlide];
 
-  // Handle slide navigation
   const navigateToSlide = (index: number) => {
+    setImageLoading(true);
     setDirection(index > currentSlide ? 1 : -1);
     setCurrentSlide(index);
   };
 
   const handlePrevSlide = () => {
+    setImageLoading(true);
     setDirection(-1);
     setCurrentSlide((prev) => (prev === 0 ? slides.length - 1 : prev - 1));
   };
 
   const handleNextSlide = () => {
+    setImageLoading(true);
     setDirection(1);
     setCurrentSlide((prev) => (prev === slides.length - 1 ? 0 : prev + 1));
   };
 
-  // Keyboard navigation
   const handleKeyDown = (e: KeyboardEvent) => {
     if (e.key === "ArrowLeft") {
       handlePrevSlide();
@@ -237,7 +193,10 @@ const Presentation = ({ baseUrl }: PresentationProps) => {
     }
   };
 
-  // Custom swipe handlers
+  const handleImageLoad = () => {
+    setImageLoading(false);
+  };
+
   const handleTouchStart = (e: TouchEvent) => {
     setTouchStart(e.targetTouches[0].clientX);
   };
@@ -248,11 +207,9 @@ const Presentation = ({ baseUrl }: PresentationProps) => {
 
   const handleTouchEnd = () => {
     if (touchStart - touchEnd > 100) {
-      // swiped left
       handleNextSlide();
     }
     if (touchStart - touchEnd < -100) {
-      // swiped right
       handlePrevSlide();
     }
   };
@@ -266,7 +223,6 @@ const Presentation = ({ baseUrl }: PresentationProps) => {
     onMouseUp: () => {},
   };
 
-  // Toggle fullscreen mode
   const toggleFullscreen = () => {
     if (!isFullscreen) {
       if (presentationRef.current?.requestFullscreen) {
@@ -280,7 +236,6 @@ const Presentation = ({ baseUrl }: PresentationProps) => {
     setIsFullscreen(!isFullscreen);
   };
 
-  // Auto-play functionality
   useEffect(() => {
     const handleFullscreenChange = () => {
       setIsFullscreen(!!document.fullscreenElement);
@@ -307,7 +262,6 @@ const Presentation = ({ baseUrl }: PresentationProps) => {
     };
   }, [isAutoPlay, currentSlide]);
 
-  // Update progress indicator
   useEffect(() => {
     if (progressRef.current) {
       const progress = ((currentSlide + 1) / slides.length) * 100;
@@ -315,7 +269,6 @@ const Presentation = ({ baseUrl }: PresentationProps) => {
     }
   }, [currentSlide, slides.length]);
 
-  // Generate particles for background effect
   const generateParticles = (count: number) => {
     return Array.from({ length: count }).map((_, index) => (
       <div
@@ -340,7 +293,6 @@ const Presentation = ({ baseUrl }: PresentationProps) => {
     ));
   };
 
-  // Apply animations with CSS classes
   const getAnimationClass = (type: string, index: number = 0) => {
     switch (type) {
       case "fadeIn":
@@ -356,7 +308,6 @@ const Presentation = ({ baseUrl }: PresentationProps) => {
     }
   };
 
-  // Helper function to get style object
   const getSlideStyles = (slide: SlideContent) => {
     const baseStyles: Record<string, string> = {
       backgroundColor: slide.backgroundColor || "#ffffff",
@@ -364,7 +315,6 @@ const Presentation = ({ baseUrl }: PresentationProps) => {
       transition: "background-color 0.5s ease, color 0.5s ease",
     };
 
-    // Merge with custom styles if provided
     if (slide.customStyles) {
       return { ...baseStyles, ...slide.customStyles };
     }
@@ -540,17 +490,54 @@ const Presentation = ({ baseUrl }: PresentationProps) => {
               )}
 
               {slide.imagePath && !slide.svgPath && (
-                <img
-                  src={slide.imagePath}
-                  alt={slide.title}
-                  style={{
-                    maxWidth: "100%",
-                    maxHeight: "100%",
-                    objectFit: "contain",
-                    borderRadius: "8px",
-                    boxShadow: "0 8px 20px rgba(0,0,0,0.15)",
-                  }}
-                />
+                <>
+                  {imageLoading && (
+                    <div
+                      className="skeleton-loader"
+                      style={{
+                        position: "absolute",
+                        width: "90%",
+                        height: "90%",
+                        borderRadius: "8px",
+                        background: `linear-gradient(90deg, 
+                          ${slide.backgroundColor === "#000000" ? "#333" : "#eee"} 25%, 
+                          ${slide.backgroundColor === "#000000" ? "#444" : "#f5f5f5"} 50%, 
+                          ${slide.backgroundColor === "#000000" ? "#333" : "#eee"} 75%)`,
+                        backgroundSize: "200% 100%",
+                        animation: "shimmer 1.5s infinite linear",
+                        zIndex: 1,
+                        display: "flex",
+                        justifyContent: "center",
+                        alignItems: "center",
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: "60px",
+                          height: "60px",
+                          border: `3px solid ${slide.backgroundColor === "#000000" ? "#555" : "#ddd"}`,
+                          borderTop: `3px solid ${slide.textColor}`,
+                          borderRadius: "50%",
+                          animation: "spin 1s linear infinite",
+                        }}
+                      />
+                    </div>
+                  )}
+                  <img
+                    src={slide.imagePath}
+                    alt={slide.title}
+                    onLoad={handleImageLoad}
+                    style={{
+                      maxWidth: "100%",
+                      maxHeight: "100%",
+                      objectFit: "contain",
+                      borderRadius: "8px",
+                      boxShadow: "0 8px 20px rgba(0,0,0,0.15)",
+                      opacity: imageLoading ? 0 : 1,
+                      transition: "opacity 0.3s ease",
+                    }}
+                  />
+                </>
               )}
             </div>
           )}
@@ -562,10 +549,10 @@ const Presentation = ({ baseUrl }: PresentationProps) => {
         className="presentation-controls"
         style={{
           position: "absolute",
-          bottom: "20px",
-          right: "20px",
+          bottom: isMobile ? "15px" : "20px",
+          right: isMobile ? "15px" : "20px",
           display: "flex",
-          gap: "12px",
+          gap: isMobile ? "8px" : "12px",
           zIndex: 20,
         }}
       >
@@ -580,8 +567,8 @@ const Presentation = ({ baseUrl }: PresentationProps) => {
                 : "rgba(0, 0, 0, 0.1)",
             border: "none",
             borderRadius: "50%",
-            width: "42px",
-            height: "42px",
+            width: isMobile ? "36px" : "42px",
+            height: isMobile ? "36px" : "42px",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -592,8 +579,8 @@ const Presentation = ({ baseUrl }: PresentationProps) => {
         >
           {isAutoPlay ? (
             <svg
-              width="24"
-              height="24"
+              width={isMobile ? "20" : "24"}
+              height={isMobile ? "20" : "24"}
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -604,8 +591,8 @@ const Presentation = ({ baseUrl }: PresentationProps) => {
             </svg>
           ) : (
             <svg
-              width="24"
-              height="24"
+              width={isMobile ? "20" : "24"}
+              height={isMobile ? "20" : "24"}
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -627,8 +614,8 @@ const Presentation = ({ baseUrl }: PresentationProps) => {
                 : "rgba(0, 0, 0, 0.1)",
             border: "none",
             borderRadius: "50%",
-            width: "42px",
-            height: "42px",
+            width: isMobile ? "36px" : "42px",
+            height: isMobile ? "36px" : "42px",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -667,15 +654,15 @@ const Presentation = ({ baseUrl }: PresentationProps) => {
         className={`slide-navigation ${getAnimationClass("fadeUp")}`}
         style={{
           position: "absolute",
-          bottom: isMobile ? "10px" : "20px",
+          bottom: isMobile ? "10px" : isTablet ? "15px" : "20px",
           left: "50%",
           transform: "translateX(-50%)",
           display: "flex",
           alignItems: "center",
-          gap: isMobile ? "5px" : "10px",
+          gap: isMobile ? "5px" : isTablet ? "8px" : "10px",
           zIndex: 20,
           width: "calc(100% - 40px)",
-          maxWidth: "500px",
+          maxWidth: isMobile ? "360px" : isTablet ? "450px" : "500px",
           justifyContent: "center",
           flexWrap: "wrap",
           padding: "0 10px",
@@ -815,14 +802,14 @@ const Presentation = ({ baseUrl }: PresentationProps) => {
         className="gesture-hint"
         style={{
           position: "absolute",
-          bottom: "120px",
+          bottom: isMobile ? "90px" : "120px",
           left: "50%",
           transform: "translateX(-50%)",
           opacity: 0.5,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          fontSize: "0.9rem",
+          fontSize: isMobile ? "0.8rem" : "0.9rem",
           color: slide.textColor || "#000000",
           transition: "opacity 0.3s ease",
           zIndex: 10,
@@ -859,6 +846,20 @@ const Presentation = ({ baseUrl }: PresentationProps) => {
           </svg>
         </div>
       </div>
+
+      {/* Add CSS keyframes for animations */}
+      <style>
+        {`
+          @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+          }
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        `}
+      </style>
     </div>
   );
 };
