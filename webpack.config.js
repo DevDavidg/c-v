@@ -2,6 +2,8 @@ const path = require("path");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 const CopyWebpackPlugin = require("copy-webpack-plugin");
+const webpack = require("webpack");
+const Dotenv = require("dotenv-webpack");
 
 const isProduction = process.env.NODE_ENV === "production";
 
@@ -12,15 +14,32 @@ module.exports = {
     path: path.resolve(__dirname, "dist"),
     filename: "bundle.js",
     clean: true,
+    // Default publicPath for development
+    publicPath: "/",
   },
   resolve: {
     extensions: [".ts", ".tsx", ".js", ".jsx", ".json"],
+    alias: {
+      "@": path.resolve(__dirname, "src"),
+      "@components": path.resolve(__dirname, "src/components"),
+      "@assets": path.resolve(__dirname, "src/assets"),
+    },
   },
   module: {
     rules: [
       {
         test: /\.tsx?$/,
-        use: "ts-loader",
+        use: [
+          {
+            loader: "ts-loader",
+            options: {
+              transpileOnly: true,
+              compilerOptions: {
+                noEmit: false,
+              },
+            },
+          },
+        ],
         exclude: /node_modules/,
       },
       {
@@ -65,8 +84,19 @@ module.exports = {
         },
       ],
     }),
+    // Add DefinePlugin to define environment variables
+    new webpack.DefinePlugin({
+      "process.env.PUBLIC_PATH": JSON.stringify(process.env.PUBLIC_PATH || "/"),
+      "process.env.NODE_ENV": JSON.stringify(
+        process.env.NODE_ENV || "development"
+      ),
+    }),
+    // Add Dotenv plugin to load environment variables
+    new Dotenv({
+      systemvars: true, // load all system variables
+    }),
   ],
-  devtool: "source-map",
+  devtool: isProduction ? "source-map" : "eval-source-map",
   devServer: {
     static: {
       directory: path.join(__dirname, "dist"),

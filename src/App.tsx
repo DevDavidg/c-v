@@ -1,11 +1,16 @@
+import { h } from "preact";
 import Presentation from "./components/Presentation";
 import "./style.scss";
 
-const App = () => {
+interface AppProps {
+  baseUrl: string;
+}
+
+const App = ({ baseUrl }: AppProps) => {
   return (
     <div className="app-container">
       <h1 className="title">Análisis Visual de Sevilla</h1>
-      <Presentation />
+      <Presentation baseUrl={baseUrl} />
     </div>
   );
 };

@@ -33,6 +33,11 @@ interface SlideContent {
   customStyles?: Record<string, string>;
 }
 
+// Define presentation props interface
+interface PresentationProps {
+  baseUrl: string;
+}
+
 // Define slide transition variants
 const slideVariants = {
   enter: (direction: number) => ({
@@ -75,110 +80,6 @@ const contentVariants = {
   }),
 };
 
-// Define the slides content
-const slides: SlideContent[] = [
-  {
-    pageNumber: 1,
-    title: "Metropol Parasol",
-    content: "",
-    imagePath: "/assets/metorpol.webp",
-    backgroundColor: "#ffffff",
-    textColor: "#000000",
-  },
-  {
-    pageNumber: 2,
-    title: "Metropol Parasol de lado",
-    content: "",
-    imagePath: "/assets/metropoldelado.jpg",
-    backgroundColor: "#ffffff",
-    textColor: "#000000",
-  },
-  {
-    pageNumber: 3,
-    title: "Metropol Parasol - Realismo",
-    content: "",
-    imagePath: "/assets/realista.png",
-    backgroundColor: "#ffffff",
-    textColor: "#000000",
-  },
-  {
-    pageNumber: 4,
-    title: "Metropol Parasol - Realismo de lado",
-    content: "",
-    imagePath: "/assets/realistadelado.png",
-    backgroundColor: "#ffffff",
-    textColor: "#000000",
-  },
-  {
-    pageNumber: 5,
-    title: "Metropol Parasol - Línea Modular",
-    content: "",
-    svgPath: "/assets/lineamodular.svg",
-    backgroundColor: "#ffffff",
-    textColor: "#000000",
-  },
-  {
-    pageNumber: 6,
-    title: "Metropol Parasol - Línea continua",
-    content: "",
-    svgPath: "/assets/lineacontinua.svg",
-    backgroundColor: "#ffffff",
-    textColor: "#000000",
-  },
-  {
-    pageNumber: 7,
-    title: "Metropol Parasol - Líneas y planos",
-    content: "",
-    svgPath: "/assets/lineasyplanos.svg",
-    backgroundColor: "#ffffff",
-    textColor: "#000000",
-  },
-  {
-    pageNumber: 8,
-    title: "Metropol Parasol - Líneas curvas y rectas de diferentes grosores",
-    content: "",
-    svgPath: "/assets/lineascurvasyrectasdediferentesgrosores.svg",
-    backgroundColor: "#ffffff",
-    textColor: "#000000",
-  },
-  {
-    pageNumber: 9,
-    title: "Metropol Parasol - Negativo",
-    content: "",
-    svgPath: "/assets/negativo.svg",
-    backgroundColor: "#000000",
-    textColor: "#ffffff",
-    customStyles: {
-      background: "#000000",
-      color: "#ffffff",
-    },
-  },
-  {
-    pageNumber: 10,
-    title: "Metropol Parasol - Positivo",
-    content: "",
-    svgPath: "/assets/positivo.svg",
-    backgroundColor: "#ffffff",
-    textColor: "#000000",
-  },
-  {
-    pageNumber: 11,
-    title: "Metropol Parasol - Planos en blanco y negro",
-    content: "",
-    svgPath: "/assets/planosblancoynegro.svg",
-    backgroundColor: "#ffffff",
-    textColor: "#000000",
-  },
-  {
-    pageNumber: 12,
-    title: "Metropol Parasol - Trama",
-    content: "",
-    svgPath: "/assets/trama.svg",
-    backgroundColor: "#ffffff",
-    textColor: "#000000",
-  },
-];
-
 interface SwipeHandlers {
   onTouchStart: (e: TouchEvent) => void;
   onTouchMove: (e: TouchEvent) => void;
@@ -188,7 +89,7 @@ interface SwipeHandlers {
   onMouseUp: (e: MouseEvent) => void;
 }
 
-const Presentation = () => {
+const Presentation = ({ baseUrl }: PresentationProps) => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [direction, setDirection] = useState(0);
   const [isAutoPlay, setIsAutoPlay] = useState(false);
@@ -199,6 +100,110 @@ const Presentation = () => {
   const progressRef = useRef<HTMLDivElement>(null);
   const autoPlayTimerRef = useRef<number | null>(null);
   const isMobile = useMediaQuery("(max-width: 768px)");
+
+  // Define the slides content with proper baseUrl handling
+  const slides: SlideContent[] = [
+    {
+      pageNumber: 1,
+      title: "Metropol Parasol",
+      content: "",
+      imagePath: `${baseUrl}assets/metorpol.webp`,
+      backgroundColor: "#ffffff",
+      textColor: "#000000",
+    },
+    {
+      pageNumber: 2,
+      title: "Metropol Parasol de lado",
+      content: "",
+      imagePath: `${baseUrl}assets/metropoldelado.jpg`,
+      backgroundColor: "#ffffff",
+      textColor: "#000000",
+    },
+    {
+      pageNumber: 3,
+      title: "Metropol Parasol - Realismo",
+      content: "",
+      imagePath: `${baseUrl}assets/realista.png`,
+      backgroundColor: "#ffffff",
+      textColor: "#000000",
+    },
+    {
+      pageNumber: 4,
+      title: "Metropol Parasol - Realismo de lado",
+      content: "",
+      imagePath: `${baseUrl}assets/realistadelado.png`,
+      backgroundColor: "#ffffff",
+      textColor: "#000000",
+    },
+    {
+      pageNumber: 5,
+      title: "Metropol Parasol - Línea Modular",
+      content: "",
+      svgPath: `${baseUrl}assets/lineamodular.svg`,
+      backgroundColor: "#ffffff",
+      textColor: "#000000",
+    },
+    {
+      pageNumber: 6,
+      title: "Metropol Parasol - Línea continua",
+      content: "",
+      svgPath: `${baseUrl}assets/lineacontinua.svg`,
+      backgroundColor: "#ffffff",
+      textColor: "#000000",
+    },
+    {
+      pageNumber: 7,
+      title: "Metropol Parasol - Líneas y planos",
+      content: "",
+      svgPath: `${baseUrl}assets/lineasyplanos.svg`,
+      backgroundColor: "#ffffff",
+      textColor: "#000000",
+    },
+    {
+      pageNumber: 8,
+      title: "Metropol Parasol - Líneas curvas y rectas de diferentes grosores",
+      content: "",
+      svgPath: `${baseUrl}assets/lineascurvasyrectasdediferentesgrosores.svg`,
+      backgroundColor: "#ffffff",
+      textColor: "#000000",
+    },
+    {
+      pageNumber: 9,
+      title: "Metropol Parasol - Negativo",
+      content: "",
+      svgPath: `${baseUrl}assets/negativo.svg`,
+      backgroundColor: "#000000",
+      textColor: "#ffffff",
+      customStyles: {
+        background: "#000000",
+        color: "#ffffff",
+      },
+    },
+    {
+      pageNumber: 10,
+      title: "Metropol Parasol - Positivo",
+      content: "",
+      svgPath: `${baseUrl}assets/positivo.svg`,
+      backgroundColor: "#ffffff",
+      textColor: "#000000",
+    },
+    {
+      pageNumber: 11,
+      title: "Metropol Parasol - Planos en blanco y negro",
+      content: "",
+      svgPath: `${baseUrl}assets/planosblancoynegro.svg`,
+      backgroundColor: "#ffffff",
+      textColor: "#000000",
+    },
+    {
+      pageNumber: 12,
+      title: "Metropol Parasol - Trama",
+      content: "",
+      svgPath: `${baseUrl}assets/trama.svg`,
+      backgroundColor: "#ffffff",
+      textColor: "#000000",
+    },
+  ];
 
   const slide = slides[currentSlide];
 
