@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - master
+      - main
 
 permissions:
   contents: write
@@ -51,7 +52,6 @@ jobs:
           cat > webpack.gh-pages.js << 'EOF'
           const config = require('./webpack.config.js');
 
-          // Set publicPath for GitHub Pages
           config.output.publicPath = '${PUBLIC_PATH}';
 
           module.exports = config;
@@ -67,6 +67,12 @@ jobs:
 
           # Create .nojekyll file to disable Jekyll processing
           touch dist/.nojekyll
+
+          # Ensure index.html exists in the dist directory
+          if [ ! -f "dist/index.html" ]; then
+            echo "Error: index.html was not generated in the dist directory"
+            exit 1
+          fi
 
       - name: Copy assets to dist
         run: |
