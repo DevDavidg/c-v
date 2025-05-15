@@ -1,23 +1,23 @@
 const config = require("./webpack.config.js");
 const webpack = require("webpack");
 
-// Get the public path from environment or use the default for this repo
-const publicPath = process.env.PUBLIC_PATH || "/c-v/";
+// The repository name should exactly match the GitHub repo
+const repoName = "c-v";
+const publicPath = `/${repoName}/`;
 
-// Set the public path for GitHub Pages
+// Override the output publicPath to match GitHub Pages
 config.output.publicPath = publicPath;
 
-// Add plugin to define PUBLIC_PATH for use in the app
+// Find and remove the existing DefinePlugin
 const definePluginIndex = config.plugins.findIndex(
   (plugin) => plugin instanceof webpack.DefinePlugin
 );
 
 if (definePluginIndex !== -1) {
-  // Remove the existing DefinePlugin
   config.plugins.splice(definePluginIndex, 1);
 }
 
-// Add a new DefinePlugin with the correct PUBLIC_PATH
+// Add a new DefinePlugin with the correct values
 config.plugins.push(
   new webpack.DefinePlugin({
     "process.env.PUBLIC_PATH": JSON.stringify(publicPath),

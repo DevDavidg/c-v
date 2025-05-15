@@ -4,7 +4,7 @@ export const getBaseUrl = () => {
     return "";
   }
 
-  // In production, use the appropriate base path for GitHub Pages
-  // This assumes the PUBLIC_PATH is correctly set during the build
-  return process.env.PUBLIC_PATH || "/c-v/";
+  // In production, use the exact path for GitHub Pages
+  // This must match the repository name
+  return "/c-v/";
 };

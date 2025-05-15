@@ -73,10 +73,26 @@ jobs:
       - name: Build
         run: |
           # Create a production build with the correct public path
-          NODE_ENV=production PUBLIC_PATH=$PUBLIC_PATH npx webpack --config webpack.gh-pages.js --mode production
+          NODE_ENV=production npx webpack --config webpack.gh-pages.js --mode production
 
           # Create .nojekyll file to disable Jekyll processing
           touch dist/.nojekyll
+
+          # Create a simple test index.html in case the main one has issues
+          cat > dist/test.html << 'EOF'
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <meta charset="UTF-8">
+              <title>GitHub Pages Test</title>
+            </head>
+            <body>
+              <h1>GitHub Pages Test Page</h1>
+              <p>If you can see this, GitHub Pages is correctly set up!</p>
+              <p>Try accessing the <a href="index.html">main application</a>.</p>
+            </body>
+          </html>
+          EOF
 
           # Create 404.html for SPA routing
           cat > dist/404.html << 'EOF'
@@ -110,6 +126,10 @@ jobs:
             echo "Error: index.html was not generated in the dist directory"
             exit 1
           fi
+
+          # Print the contents of the dist directory for debugging
+          echo "Contents of dist directory:"
+          ls -la dist/
 
       - name: Copy assets to dist
         run: |
