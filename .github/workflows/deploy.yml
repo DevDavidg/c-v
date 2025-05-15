@@ -46,9 +46,7 @@ jobs:
           fi
 
           echo "REPO_NAME=$REPO_NAME" >> $GITHUB_ENV
-
-          # Log for debugging
-          echo "Public Path: $PUBLIC_PATH"
+          echo "Public Path: $PUBLIC_PATH" >> $GITHUB_STEP_SUMMARY
 
       - name: Create webpack config for GitHub Pages
         run: |
@@ -72,10 +70,16 @@ jobs:
           # Replace ${PUBLIC_PATH} with the actual path
           sed -i "s#\${PUBLIC_PATH}#$PUBLIC_PATH#g" webpack.gh-pages.js
 
-      - name: Create 404.html for SPA routing
+      - name: Build
         run: |
-          mkdir -p public
-          cat > public/404.html << 'EOF'
+          # Create a production build with the correct public path
+          NODE_ENV=production PUBLIC_PATH=$PUBLIC_PATH npx webpack --config webpack.gh-pages.js --mode production
+
+          # Create .nojekyll file to disable Jekyll processing
+          touch dist/.nojekyll
+
+          # Create 404.html for SPA routing
+          cat > dist/404.html << 'EOF'
           <!DOCTYPE html>
           <html>
             <head>
@@ -85,12 +89,12 @@ jobs:
                 // Single Page Apps for GitHub Pages
                 // MIT License
                 // https://github.com/rafgraph/spa-github-pages
-                var segmentCount = 1;
+                var pathSegmentsToKeep = 1;
                 var l = window.location;
                 l.replace(
                   l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') +
-                  l.pathname.split('/').slice(0, 1 + segmentCount).join('/') + '/?p=/' +
-                  l.pathname.slice(1).split('/').slice(segmentCount).join('/').replace(/&/g, '~and~') +
+                  l.pathname.split('/').slice(0, 1 + pathSegmentsToKeep).join('/') + '/?p=/' +
+                  l.pathname.slice(1).split('/').slice(pathSegmentsToKeep).join('/').replace(/&/g, '~and~') +
                   (l.search ? '&q=' + l.search.slice(1).replace(/&/g, '~and~') : '') +
                   l.hash
                 );
@@ -100,17 +104,6 @@ jobs:
             </body>
           </html>
           EOF
-
-      - name: Build
-        run: |
-          # Create a production build with the GitHub Pages config
-          NODE_ENV=production PUBLIC_PATH=$PUBLIC_PATH npx webpack --config webpack.gh-pages.js --mode production
-
-          # Create .nojekyll file to disable Jekyll processing
-          touch dist/.nojekyll
-
-          # Copy 404.html for SPA routing
-          cp public/404.html dist/404.html
 
           # Ensure index.html exists in the dist directory
           if [ ! -f "dist/index.html" ]; then
