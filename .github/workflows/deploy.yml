@@ -75,7 +75,15 @@ jobs:
       - name: Create 404.html for SPA routing
         run: |
           mkdir -p public
-          cat > public/404.html << 'EOF'
+
+          # Set segmentCount based on whether it's a user page or not
+          if [[ "$IS_USER_PAGE" == "true" ]]; then
+            SEGMENT_COUNT=0
+          else
+            SEGMENT_COUNT=1
+          fi
+
+          cat > public/404.html << EOF
           <!DOCTYPE html>
           <html>
             <head>
@@ -85,7 +93,7 @@ jobs:
                 // Single Page Apps for GitHub Pages
                 // MIT License
                 // https://github.com/rafgraph/spa-github-pages
-                var segmentCount = 1;
+                var segmentCount = ${SEGMENT_COUNT};
                 var l = window.location;
                 l.replace(
                   l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') +
@@ -112,6 +120,26 @@ jobs:
           # Copy 404.html for SPA routing
           cp public/404.html dist/404.html
 
+          # Add SPA redirect script to index.html
+          cat > dist/redirect-script.js << EOF
+          // Single Page Apps for GitHub Pages
+          // MIT License
+          // https://github.com/rafgraph/spa-github-pages
+          (function(l) {
+            if (l.search[1] === '/' ) {
+              var decoded = l.search.slice(1).split('&').map(function(s) { 
+                return s.replace(/~and~/g, '&')
+              }).join('?');
+              window.history.replaceState(null, null,
+                  l.pathname.slice(0, -1) + decoded + l.hash
+              );
+            }
+          }(window.location))
+          EOF
+
+          # Insert the script into index.html
+          sed -i 's/<head>/<head>\\n  <script src="redirect-script.js"><\/script>/' dist/index.html
+
           # Ensure index.html exists in the dist directory
           if [ ! -f "dist/index.html" ]; then
             echo "Error: index.html was not generated in the dist directory"
@@ -120,10 +148,23 @@ jobs:
 
       - name: Copy assets to dist
         run: |
+          # Create assets directory if it doesn't exist
+          mkdir -p dist/assets
+
+          # Copy assets if they exist
           if [ -d "public/assets" ]; then
-            mkdir -p dist/assets
-            cp -r public/assets/* dist/assets/
+            cp -r public/assets/* dist/assets/ || true
           fi
+
+          # Copy any other public files (except 404.html which we've already handled)
+          if [ -d "public" ]; then
+            find public -type f -not -name "404.html" -exec cp {} dist/ \; || true
+          fi
+
+          # Make sure all directories in dist are readable
+          find dist -type d -exec chmod 755 {} \;
+          # Make sure all files in dist are readable
+          find dist -type f -exec chmod 644 {} \;
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
