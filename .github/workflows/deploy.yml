@@ -30,56 +30,19 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Get repository info for GitHub Pages
-        id: repo-info
-        run: |
-          REPO_OWNER=$(echo '${{ github.repository }}' | awk -F '/' '{print $1}')
-          REPO_NAME=$(echo '${{ github.repository }}' | awk -F '/' '{print $2}')
-
-          # Check if this is a user/org page (repo name is username.github.io)
-          if [[ "$REPO_NAME" == "$REPO_OWNER.github.io" ]]; then
-            echo "IS_USER_PAGE=true" >> $GITHUB_ENV
-            echo "PUBLIC_PATH=/" >> $GITHUB_ENV
-          else
-            echo "IS_USER_PAGE=false" >> $GITHUB_ENV
-            echo "PUBLIC_PATH=/$REPO_NAME/" >> $GITHUB_ENV
-          fi
-
-          echo "REPO_NAME=$REPO_NAME" >> $GITHUB_ENV
-
-      - name: Create webpack config for GitHub Pages
-        run: |
-          cat > webpack.gh-pages.js << 'EOF'
-          const config = require('./webpack.config.js');
-
-          config.output.publicPath = '${PUBLIC_PATH}';
-
-          module.exports = config;
-          EOF
-
-          # Replace ${PUBLIC_PATH} with the actual path
-          sed -i "s#\${PUBLIC_PATH}#$PUBLIC_PATH#g" webpack.gh-pages.js
-
       - name: Build
         run: |
-          # Create a production build with the GitHub Pages config
+          # Set the environment variable for the build
+          echo "PUBLIC_PATH=/c-v/" >> $GITHUB_ENV
+
+          # Create a production build with the webpack.gh-pages.js config
           NODE_ENV=production npx webpack --config webpack.gh-pages.js --mode production
 
           # Create .nojekyll file to disable Jekyll processing
           touch dist/.nojekyll
 
-          # Ensure index.html exists in the dist directory
-          if [ ! -f "dist/index.html" ]; then
-            echo "Error: index.html was not generated in the dist directory"
-            exit 1
-          fi
-
-      - name: Copy assets to dist
-        run: |
-          if [ -d "public/assets" ]; then
-            mkdir -p dist/assets
-            cp -r public/assets/* dist/assets/
-          fi
+          # Copy 404.html to enable SPA routing on GitHub Pages
+          cp public/404.html dist/404.html || echo "404.html not found in public directory"
 
       - name: Setup Pages
         uses: actions/configure-pages@v4

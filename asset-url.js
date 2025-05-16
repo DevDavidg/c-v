@@ -1,9 +1,8 @@
-import { getBaseUrl } from "./base-url";
-
 export const getAssetUrl = (assetPath) => {
+  const baseUrl = getBaseUrl();
   const normalizedPath = assetPath.startsWith("/")
-    ? assetPath
-    : `/${assetPath}`;
+    ? assetPath.slice(1)
+    : assetPath;
 
-  return `${getBaseUrl()}${normalizedPath.replace(/^\//, "")}`;
+  return `${baseUrl}${normalizedPath}`;
 };

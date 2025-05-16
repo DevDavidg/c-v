@@ -4,8 +4,8 @@ const HtmlWebpackPlugin = require("html-webpack-plugin");
 const path = require("path");
 const CopyWebpackPlugin = require("copy-webpack-plugin");
 
-// Hard-code the repository path for GitHub Pages
-const publicPath = "/c-v/";
+// Get the public path from environment variable or use the default for GitHub Pages
+const publicPath = process.env.PUBLIC_PATH || "/c-v/";
 
 // Override the output publicPath to match GitHub Pages
 config.output.publicPath = publicPath;
@@ -52,6 +52,10 @@ config.plugins.push(
     filename: "index.html",
     inject: "body",
     minify: false,
+    // Add base tag for GitHub Pages
+    templateParameters: {
+      PUBLIC_PATH: publicPath,
+    },
   })
 );
 
