@@ -1,8 +1,11 @@
 const config = require("./webpack.config.js");
 const webpack = require("webpack");
+const HtmlWebpackPlugin = require("html-webpack-plugin");
+const path = require("path");
+const CopyWebpackPlugin = require("copy-webpack-plugin");
 
-// Get the repository name from the environment or default to the last part of the path
-const publicPath = process.env.PUBLIC_PATH || "/";
+// Hard-code the repository path for GitHub Pages
+const publicPath = "/c-v/";
 
 // Override the output publicPath to match GitHub Pages
 config.output.publicPath = publicPath;
@@ -24,10 +27,6 @@ config.plugins.push(
   })
 );
 
-// Add HtmlWebpackPlugin with base href
-const HtmlWebpackPlugin = require("html-webpack-plugin");
-const path = require("path");
-
 // Find and remove the existing HtmlWebpackPlugin
 const htmlPluginIndex = config.plugins.findIndex(
   (plugin) => plugin.constructor.name === "HtmlWebpackPlugin"
@@ -37,14 +36,42 @@ if (htmlPluginIndex !== -1) {
   config.plugins.splice(htmlPluginIndex, 1);
 }
 
-// Add a new HtmlWebpackPlugin with base tag
+// Find and remove the existing CopyWebpackPlugin
+const copyPluginIndex = config.plugins.findIndex(
+  (plugin) => plugin.constructor.name === "CopyWebpackPlugin"
+);
+
+if (copyPluginIndex !== -1) {
+  config.plugins.splice(copyPluginIndex, 1);
+}
+
+// Add a new HtmlWebpackPlugin with appropriate settings
 config.plugins.push(
   new HtmlWebpackPlugin({
     template: path.resolve(__dirname, "src/index.html"),
     filename: "index.html",
     inject: "body",
     minify: false,
-    base: publicPath,
+  })
+);
+
+// Add CopyWebpackPlugin with 404.html
+config.plugins.push(
+  new CopyWebpackPlugin({
+    patterns: [
+      {
+        from: "public",
+        to: "",
+        globOptions: {
+          ignore: ["**/index.html"],
+        },
+      },
+      {
+        from: "src/assets",
+        to: "assets",
+        noErrorOnMissing: true,
+      },
+    ],
   })
 );
 

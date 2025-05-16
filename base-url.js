@@ -4,6 +4,6 @@ export const getBaseUrl = () => {
     return "";
   }
 
-  // In production, use the path from the environment
-  return process.env.PUBLIC_PATH || "/";
+  // In production, use a hardcoded path for GitHub Pages
+  return "/c-v/";
 };
