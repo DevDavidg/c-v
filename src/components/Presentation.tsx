@@ -459,7 +459,7 @@ const Presentation = ({ baseUrl }: PresentationProps) => {
   const getSlideStyles = (slide: SlideContent) => {
     const baseStyles: Record<string, string> = {
       backgroundColor: isMobile
-        ? "#ffffff"
+        ? "#ffffff" // Force white background on mobile
         : slide.backgroundColor || "#ffffff",
       color: isMobile ? "#000000" : slide.textColor || "#000000",
       transition: "background-color 0.5s ease, color 0.5s ease",
@@ -550,6 +550,7 @@ const Presentation = ({ baseUrl }: PresentationProps) => {
           position: "relative",
           overflow: "hidden",
           maxWidth: "100vw",
+          backgroundColor: isMobile ? "#ffffff" : "rgba(255, 255, 255, 0.9)", // Force white background on mobile
         }}
       >
         <div
@@ -626,6 +627,7 @@ const Presentation = ({ baseUrl }: PresentationProps) => {
             height: !slide.content ? "calc(100vh - 80px)" : "auto",
             position: "relative",
             flexDirection: isSmallMobile && slide.content ? "column" : "row",
+            backgroundColor: isMobile ? "#ffffff" : "transparent", // Force white background on mobile
           }}
         >
           {slide.content && (
