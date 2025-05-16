@@ -6,6 +6,8 @@ const webpack = require("webpack");
 const Dotenv = require("dotenv-webpack");
 
 const isProduction = process.env.NODE_ENV === "production";
+// Read the public path from environment variables with fallback for GitHub Pages
+const publicPath = process.env.PUBLIC_PATH || (isProduction ? "/c-v/" : "/");
 
 module.exports = {
   mode: isProduction ? "production" : "development",
@@ -14,7 +16,7 @@ module.exports = {
     path: path.resolve(__dirname, "dist"),
     filename: "bundle.js",
     clean: true,
-    publicPath: "/",
+    publicPath: publicPath,
     assetModuleFilename: "assets/[name][ext]",
   },
   resolve: {
@@ -95,6 +97,10 @@ module.exports = {
       filename: "index.html",
       inject: "body",
       minify: false,
+      // Add base href tag for GitHub Pages
+      templateParameters: {
+        PUBLIC_PATH: publicPath,
+      },
     }),
     new MiniCssExtractPlugin({
       filename: "[name].css",
@@ -116,7 +122,7 @@ module.exports = {
       ],
     }),
     new webpack.DefinePlugin({
-      "process.env.PUBLIC_PATH": JSON.stringify(process.env.PUBLIC_PATH || "/"),
+      "process.env.PUBLIC_PATH": JSON.stringify(publicPath),
       "process.env.NODE_ENV": JSON.stringify(
         process.env.NODE_ENV || "development"
       ),
