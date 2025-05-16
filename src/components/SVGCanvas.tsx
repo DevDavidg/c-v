@@ -4,11 +4,11 @@ interface AnimatedSVGProps {
   svgPath: string;
   animationDuration?: number;
   staggerDelay?: number;
-  backgroundColor?: string; // color de fondo opcional
-  width?: string; // ancho personalizado
-  height?: string; // altura personalizada
-  animateFill?: boolean; // animar el relleno (fill)
-  fillDelay?: number; // retraso para comenzar la animación de relleno (en ms)
+  backgroundColor?: string;
+  width?: string;
+  height?: string;
+  animateFill?: boolean;
+  fillDelay?: number;
 }
 
 const AnimatedSVG = ({
@@ -95,7 +95,7 @@ const AnimatedSVG = ({
               );
             }
 
-            let length = 1000; // valor por defecto
+            let length = 1000;
 
             if (
               element.tagName === "path" ||
@@ -119,7 +119,7 @@ const AnimatedSVG = ({
             if (animateFill && hasFill) {
               styledElement.style.fillOpacity = "0";
 
-              const strokeAnimationDuration = animationDuration * 1000; // convertir a ms
+              const strokeAnimationDuration = animationDuration * 1000;
               const elementDelay = index * staggerDelay;
               const fillAnimationDelay =
                 strokeAnimationDuration * 0.7 + elementDelay + fillDelay;
@@ -137,7 +137,7 @@ const AnimatedSVG = ({
 
           setSvgLoaded(true);
 
-          // Ensure loader shows for at least 500ms
+         
           const loadingTime = Date.now() - loadStartTime.current;
           const remainingTime = Math.max(0, 500 - loadingTime);
 
@@ -357,3 +357,4 @@ const AnimatedSVG = ({
 };
 
 export default AnimatedSVG;
+

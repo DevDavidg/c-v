@@ -43,7 +43,6 @@ interface SwipeHandlers {
   onMouseUp: (e: MouseEvent) => void;
 }
 
-// Extract unified loader component at the top of the file after imports
 const EnhancedLoader = ({
   backgroundColor = "#ffffff",
   textColor = "#000000",
@@ -291,7 +290,7 @@ const Presentation = ({ baseUrl }: PresentationProps) => {
   const navigateToSlide = (index: number) => {
     if (index === currentSlide) return;
 
-    // Prevent duplicate loader by setting changing state
+   
     setIsChangingSlide(true);
     loadStartTimeRef.current = Date.now();
     setImageLoading(true);
@@ -300,7 +299,7 @@ const Presentation = ({ baseUrl }: PresentationProps) => {
   };
 
   const handlePrevSlide = () => {
-    // Prevent duplicate loader by setting changing state
+   
     setIsChangingSlide(true);
     loadStartTimeRef.current = Date.now();
     setImageLoading(true);
@@ -309,7 +308,7 @@ const Presentation = ({ baseUrl }: PresentationProps) => {
   };
 
   const handleNextSlide = () => {
-    // Prevent duplicate loader by setting changing state
+   
     setIsChangingSlide(true);
     loadStartTimeRef.current = Date.now();
     setImageLoading(true);
@@ -459,7 +458,7 @@ const Presentation = ({ baseUrl }: PresentationProps) => {
   const getSlideStyles = (slide: SlideContent) => {
     const baseStyles: Record<string, string> = {
       backgroundColor: isMobile
-        ? "#ffffff" // Force white background on mobile
+        ? "#ffffff"
         : slide.backgroundColor || "#ffffff",
       color: isMobile ? "#000000" : slide.textColor || "#000000",
       transition: "background-color 0.5s ease, color 0.5s ease",
@@ -476,15 +475,15 @@ const Presentation = ({ baseUrl }: PresentationProps) => {
     setShowMobileNav(!showMobileNav);
   };
 
-  // Add an effect to preload images when a slide changes
+ 
   useEffect(() => {
-    // Preload the image for current slide
+   
     if (slide.imagePath && !slide.svgPath) {
       const img = new Image();
       img.src = slide.imagePath;
     }
 
-    // After slide change, make sure we reset the changing state after a safety timeout
+   
     const safetyTimer = setTimeout(() => {
       setIsChangingSlide(false);
     }, 800);
@@ -550,7 +549,7 @@ const Presentation = ({ baseUrl }: PresentationProps) => {
           position: "relative",
           overflow: "hidden",
           maxWidth: "100vw",
-          backgroundColor: isMobile ? "#ffffff" : "rgba(255, 255, 255, 0.9)", // Force white background on mobile
+          backgroundColor: isMobile ? "#ffffff" : "rgba(255, 255, 255, 0.9)",
         }}
       >
         <div
@@ -627,7 +626,7 @@ const Presentation = ({ baseUrl }: PresentationProps) => {
             height: !slide.content ? "calc(100vh - 80px)" : "auto",
             position: "relative",
             flexDirection: isSmallMobile && slide.content ? "column" : "row",
-            backgroundColor: isMobile ? "#ffffff" : "transparent", // Force white background on mobile
+            backgroundColor: isMobile ? "#ffffff" : "transparent",
           }}
         >
           {slide.content && (
@@ -2188,3 +2187,4 @@ const Presentation = ({ baseUrl }: PresentationProps) => {
 };
 
 export default Presentation;
+

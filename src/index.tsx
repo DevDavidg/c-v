@@ -10,3 +10,4 @@ document.addEventListener("DOMContentLoaded", () => {
     render(<App baseUrl={(window as any).__BASE_URL__} />, root);
   }
 });
+
