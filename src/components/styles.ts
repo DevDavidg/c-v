@@ -1,4 +1,3 @@
-// Global styling for the SVG gallery app
 import { createGlobalStyle } from "styled-components";
 
 export const GlobalStyle = createGlobalStyle`

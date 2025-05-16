@@ -1,4 +1,3 @@
-import { h } from "preact";
 import Presentation from "./components/Presentation";
 import "./style.scss";
 

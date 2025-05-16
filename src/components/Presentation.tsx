@@ -43,6 +43,127 @@ interface SwipeHandlers {
   onMouseUp: (e: MouseEvent) => void;
 }
 
+// Extract unified loader component at the top of the file after imports
+const EnhancedLoader = ({
+  backgroundColor = "#ffffff",
+  textColor = "#000000",
+  text = "Cargando",
+  size = "medium",
+  isFullScreen = false,
+  loaderId = "default-loader",
+}) => {
+  const getSize = () => {
+    switch (size) {
+      case "small":
+        return { spinner: 30, text: 12 };
+      case "large":
+        return { spinner: 50, text: 16 };
+      default:
+        return { spinner: 40, text: 14 };
+    }
+  };
+
+  const sizeConfig = getSize();
+
+  return (
+    <div
+      className="enhanced-loader-container"
+      key={loaderId}
+      style={{
+        position: isFullScreen ? "absolute" : "relative",
+        top: 0,
+        left: 0,
+        width: "100%",
+        height: "100%",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        backgroundColor:
+          backgroundColor === "transparent"
+            ? "rgba(255, 255, 255, 0.7)"
+            : `${backgroundColor}`,
+        zIndex: 10,
+        backdropFilter: "blur(8px)",
+        WebkitBackdropFilter: "blur(8px)",
+      }}
+    >
+      <div
+        className="loader-content"
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          gap: "15px",
+        }}
+      >
+        <div className="spinner-rings">
+          <div
+            style={{
+              width: `${sizeConfig.spinner}px`,
+              height: `${sizeConfig.spinner}px`,
+              borderRadius: "50%",
+              border: `3px solid ${backgroundColor === "#000000" ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)"}`,
+              borderTopColor:
+                backgroundColor === "#000000" ? "#ffffff" : textColor,
+              animation: "spin 1s linear infinite",
+              position: "relative",
+            }}
+          ></div>
+        </div>
+        {text && (
+          <div
+            className="loading-text"
+            style={{
+              fontSize: `${sizeConfig.text}px`,
+              fontWeight: "500",
+              color: backgroundColor === "#000000" ? "#ffffff" : textColor,
+              opacity: 0.8,
+              animation: "pulse 1.5s ease-in-out infinite",
+              textAlign: "center",
+            }}
+          >
+            {text}
+            <span
+              className="loading-dots"
+              style={{
+                display: "inline-block",
+                width: "24px",
+                textAlign: "left",
+              }}
+            >
+              <span
+                style={{
+                  animation: "loadingDots 1.5s infinite",
+                  animationDelay: "0s",
+                  marginLeft: "3px",
+                }}
+              >
+                .
+              </span>
+              <span
+                style={{
+                  animation: "loadingDots 1.5s infinite",
+                  animationDelay: "0.3s",
+                }}
+              >
+                .
+              </span>
+              <span
+                style={{
+                  animation: "loadingDots 1.5s infinite",
+                  animationDelay: "0.6s",
+                }}
+              >
+                .
+              </span>
+            </span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 const Presentation = ({ baseUrl }: PresentationProps) => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [direction, setDirection] = useState(0);
@@ -58,6 +179,9 @@ const Presentation = ({ baseUrl }: PresentationProps) => {
   const isSmallMobile = useMediaQuery("(max-width: 600px)");
   const isMobile = useMediaQuery("(max-width: 768px)");
   const isTablet = useMediaQuery("(max-width: 1024px)");
+  const loadStartTimeRef = useRef<number>(0);
+  const imageRef = useRef<HTMLImageElement>(null);
+  const [isChangingSlide, setIsChangingSlide] = useState(false);
 
   const slides: SlideContent[] = [
     {
@@ -165,18 +289,29 @@ const Presentation = ({ baseUrl }: PresentationProps) => {
   const slide = slides[currentSlide];
 
   const navigateToSlide = (index: number) => {
+    if (index === currentSlide) return;
+
+    // Prevent duplicate loader by setting changing state
+    setIsChangingSlide(true);
+    loadStartTimeRef.current = Date.now();
     setImageLoading(true);
     setDirection(index > currentSlide ? 1 : -1);
     setCurrentSlide(index);
   };
 
   const handlePrevSlide = () => {
+    // Prevent duplicate loader by setting changing state
+    setIsChangingSlide(true);
+    loadStartTimeRef.current = Date.now();
     setImageLoading(true);
     setDirection(-1);
     setCurrentSlide((prev) => (prev === 0 ? slides.length - 1 : prev - 1));
   };
 
   const handleNextSlide = () => {
+    // Prevent duplicate loader by setting changing state
+    setIsChangingSlide(true);
+    loadStartTimeRef.current = Date.now();
     setImageLoading(true);
     setDirection(1);
     setCurrentSlide((prev) => (prev === slides.length - 1 ? 0 : prev + 1));
@@ -196,7 +331,18 @@ const Presentation = ({ baseUrl }: PresentationProps) => {
   };
 
   const handleImageLoad = () => {
-    setImageLoading(false);
+    const loadingTime = Date.now() - loadStartTimeRef.current;
+    const minLoadingTime = 500;
+
+    setIsChangingSlide(false);
+
+    if (loadingTime < minLoadingTime) {
+      setTimeout(() => {
+        setImageLoading(false);
+      }, minLoadingTime - loadingTime);
+    } else {
+      setImageLoading(false);
+    }
   };
 
   const handleTouchStart = (e: TouchEvent) => {
@@ -329,6 +475,22 @@ const Presentation = ({ baseUrl }: PresentationProps) => {
   const toggleMobileNav = () => {
     setShowMobileNav(!showMobileNav);
   };
+
+  // Add an effect to preload images when a slide changes
+  useEffect(() => {
+    // Preload the image for current slide
+    if (slide.imagePath && !slide.svgPath) {
+      const img = new Image();
+      img.src = slide.imagePath;
+    }
+
+    // After slide change, make sure we reset the changing state after a safety timeout
+    const safetyTimer = setTimeout(() => {
+      setIsChangingSlide(false);
+    }, 800);
+
+    return () => clearTimeout(safetyTimer);
+  }, [currentSlide]);
 
   return (
     <div
@@ -535,51 +697,33 @@ const Presentation = ({ baseUrl }: PresentationProps) => {
               )}
 
               {slide.imagePath && !slide.svgPath && (
-                <>
-                  {imageLoading && (
-                    <div
-                      className="skeleton-loader"
-                      style={{
-                        position: "absolute",
-                        width: isSmallMobile ? "95%" : "90%",
-                        height: isSmallMobile ? "95%" : "90%",
-                        borderRadius: "8px",
-                        background: `linear-gradient(90deg, 
-                          ${isMobile ? "#eee" : slide.backgroundColor === "#000000" ? "#333" : "#eee"} 25%, 
-                          ${isMobile ? "#f5f5f5" : slide.backgroundColor === "#000000" ? "#444" : "#f5f5f5"} 50%, 
-                          ${isMobile ? "#eee" : slide.backgroundColor === "#000000" ? "#333" : "#eee"} 75%)`,
-                        backgroundSize: "200% 100%",
-                        animation: "shimmer 1.5s infinite linear",
-                        zIndex: 1,
-                        display: "flex",
-                        justifyContent: "center",
-                        alignItems: "center",
-                        overflow: "hidden",
-                      }}
-                    >
-                      <div className="loader-spinner">
-                        <svg viewBox="0 0 50 50" width="50" height="50">
-                          <circle
-                            cx="25"
-                            cy="25"
-                            r="20"
-                            fill="none"
-                            stroke={isMobile ? "#000000" : slide.textColor}
-                            strokeWidth="4"
-                            strokeLinecap="round"
-                            style={{
-                              strokeDasharray: "94.2477796077",
-                              strokeDashoffset: "47.1238898038",
-                              transformOrigin: "center",
-                              animation:
-                                "spinner-dash 1.5s ease-in-out infinite, spinner-rotate 2s linear infinite",
-                            }}
-                          />
-                        </svg>
-                      </div>
-                    </div>
+                <div
+                  className="image-container"
+                  style={{
+                    position: "relative",
+                    width: "100%",
+                    height: "100%",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  {imageLoading && !isChangingSlide && (
+                    <EnhancedLoader
+                      backgroundColor={
+                        isMobile ? "#ffffff" : slide.backgroundColor
+                      }
+                      textColor={isMobile ? "#000000" : slide.textColor}
+                      text="Cargando imagen"
+                      size={
+                        isSmallMobile ? "small" : isMobile ? "medium" : "large"
+                      }
+                      isFullScreen={true}
+                      loaderId={`image-loader-${currentSlide}`}
+                    />
                   )}
                   <img
+                    ref={imageRef}
                     src={slide.imagePath}
                     alt={slide.title}
                     onLoad={handleImageLoad}
@@ -592,10 +736,10 @@ const Presentation = ({ baseUrl }: PresentationProps) => {
                         ? "0 4px 15px rgba(0,0,0,0.12)"
                         : "0 8px 20px rgba(0,0,0,0.15)",
                       opacity: imageLoading ? 0 : 1,
-                      transition: "opacity 0.3s ease",
+                      transition: "opacity 0.5s ease",
                     }}
                   />
-                </>
+                </div>
               )}
             </div>
           )}
@@ -2004,6 +2148,36 @@ const Presentation = ({ baseUrl }: PresentationProps) => {
           
           .prev-slide-button:hover, .next-slide-button:hover {
             color: #424242 !important;
+          }
+          
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+          
+          @keyframes pulse {
+            0%, 100% { opacity: 0.8; }
+            50% { opacity: 0.4; }
+          }
+          
+          @keyframes loadingDots {
+            0%, 100% { opacity: 0.2; transform: translateY(0px); }
+            50% { opacity: 1; transform: translateY(-2px); }
+          }
+          
+          @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+          }
+          
+          .spinner-rings {
+            position: relative;
+            width: 40px;
+            height: 40px;
+          }
+          
+          .enhanced-loader-container {
+            animation: fadeIn 0.3s ease-in-out;
           }
         `}
       </style>

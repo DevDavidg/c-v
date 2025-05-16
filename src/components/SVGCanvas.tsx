@@ -24,13 +24,16 @@ const AnimatedSVG = ({
   const svgContainerRef = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [svgLoaded, setSvgLoaded] = useState<boolean>(false);
+  const loadStartTime = useRef<number>(0);
 
   useEffect(() => {
     const loadAndAnimateSVG = async () => {
       try {
         setLoading(true);
+        setSvgLoaded(false);
+        loadStartTime.current = Date.now();
 
-        // Cargar el SVG como texto
         const response = await fetch(svgPath);
         if (!response.ok) {
           throw new Error(`Error al cargar el SVG: ${response.statusText}`);
@@ -38,21 +41,17 @@ const AnimatedSVG = ({
 
         const svgText = await response.text();
 
-        // Crear un elemento SVG para parsear el contenido
         const parser = new DOMParser();
         const svgDoc = parser.parseFromString(svgText, "image/svg+xml");
         const svgElement = svgDoc.documentElement;
 
-        // Eliminar elementos de texto dentro del SVG
         const textElements = svgElement.querySelectorAll("text");
         textElements.forEach((el) => el.remove());
 
-        // Insertar el SVG en el DOM
         if (svgContainerRef.current) {
           svgContainerRef.current.innerHTML = "";
           svgContainerRef.current.appendChild(svgElement);
 
-          // Asegurar que el SVG ocupe todo el espacio disponible manteniendo su proporción
           svgElement.setAttribute("width", "100%");
           svgElement.setAttribute("height", "100%");
           svgElement.style.display = "block";
@@ -61,12 +60,10 @@ const AnimatedSVG = ({
           svgElement.style.maxHeight = "100vh";
           svgElement.setAttribute("preserveAspectRatio", "xMidYMid meet");
 
-          // Seleccionar todos los elementos que pueden tener stroke o fill
           const elements = svgElement.querySelectorAll(
             "path, line, polyline, polygon, rect, circle, ellipse"
           );
 
-          // Crear y aplicar estilos para la animación
           const styleElement = document.createElement("style");
           styleElement.setAttribute("data-svg-animation", "true");
           styleElement.textContent = `
@@ -87,13 +84,10 @@ const AnimatedSVG = ({
           `;
           document.head.appendChild(styleElement);
 
-          // Configurar cada elemento para la animación
           elements.forEach((element, index) => {
-            // Obtener el color de relleno original
             const originalFill = element.getAttribute("fill");
             const hasFill = originalFill && originalFill !== "none";
 
-            // Asegurarse de que el elemento tenga un stroke
             if (!element.getAttribute("stroke")) {
               element.setAttribute(
                 "stroke",
@@ -101,10 +95,8 @@ const AnimatedSVG = ({
               );
             }
 
-            // Obtener la longitud del trazo - manejar correctamente los tipos
             let length = 1000; // valor por defecto
 
-            // Intentar obtener la longitud real del trazo para elementos que admiten getTotalLength
             if (
               element.tagName === "path" ||
               element.tagName === "line" ||
@@ -117,41 +109,45 @@ const AnimatedSVG = ({
               }
             }
 
-            // Convertir a SVGElement o HTMLElement para acceder a style
             const styledElement = element as SVGElement;
 
-            // Configurar la animación del trazo
             styledElement.style.strokeDasharray = `${length}`;
             styledElement.style.strokeDashoffset = `${length}`;
             styledElement.style.animation = `drawStroke ${animationDuration}s ease-in-out forwards`;
             styledElement.style.animationDelay = `${(index * staggerDelay) / 1000}s`;
 
-            // Configurar la animación del relleno si el elemento tiene relleno
             if (animateFill && hasFill) {
-              // Guardar el color de relleno original
               styledElement.style.fillOpacity = "0";
 
-              // Calcular el retraso para la animación del relleno después del trazo
               const strokeAnimationDuration = animationDuration * 1000; // convertir a ms
               const elementDelay = index * staggerDelay;
               const fillAnimationDelay =
                 strokeAnimationDuration * 0.7 + elementDelay + fillDelay;
 
-              // Configurar la animación del relleno
               styledElement.style.animation = `drawStroke ${animationDuration}s ease-in-out forwards, 
                  fillIn 0.8s ease-in-out forwards ${fillAnimationDelay / 1000}s`;
             }
 
-            // Hacer el elemento inicialmente invisible
             styledElement.style.opacity = "0";
 
-            // Agregar evento para hacer visible el elemento cuando comience su animación
             setTimeout(() => {
               styledElement.style.opacity = "1";
             }, index * staggerDelay);
           });
 
-          setLoading(false);
+          setSvgLoaded(true);
+
+          // Ensure loader shows for at least 500ms
+          const loadingTime = Date.now() - loadStartTime.current;
+          const remainingTime = Math.max(0, 500 - loadingTime);
+
+          if (remainingTime > 0) {
+            setTimeout(() => {
+              setLoading(false);
+            }, remainingTime);
+          } else {
+            setLoading(false);
+          }
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : "Error desconocido");
@@ -161,7 +157,6 @@ const AnimatedSVG = ({
 
     loadAndAnimateSVG();
 
-    // Limpieza
     return () => {
       const styleElement = document.querySelector("style[data-svg-animation]");
       if (styleElement) {
@@ -187,28 +182,132 @@ const AnimatedSVG = ({
       }}
     >
       {loading && (
-        <p
+        <div
+          className="modern-loader-container"
           style={{
-            textAlign: "center",
-            fontWeight: "500",
-            margin: "20px auto",
+            position: "absolute",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            backgroundColor:
+              backgroundColor === "transparent"
+                ? "rgba(255, 255, 255, 0.7)"
+                : backgroundColor,
+            zIndex: 10,
+            backdropFilter: "blur(8px)",
+            WebkitBackdropFilter: "blur(8px)",
           }}
         >
-          Cargando SVG...
-        </p>
+          <div
+            className="loader-content"
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: "15px",
+            }}
+          >
+            <div className="spinner-rings">
+              <div
+                style={{
+                  width: "40px",
+                  height: "40px",
+                  borderRadius: "50%",
+                  border: "3px solid rgba(0,0,0,0.1)",
+                  borderTopColor:
+                    backgroundColor === "#000000" ? "#ffffff" : "#000000",
+                  animation: "spin 1s linear infinite",
+                  position: "relative",
+                }}
+              ></div>
+            </div>
+            <div
+              className="loading-text"
+              style={{
+                fontSize: "14px",
+                fontWeight: "500",
+                color: backgroundColor === "#000000" ? "#ffffff" : "#000000",
+                opacity: 0.8,
+                animation: "pulse 1.5s ease-in-out infinite",
+                textAlign: "center",
+              }}
+            >
+              Cargando SVG
+              <span
+                className="loading-dots"
+                style={{
+                  display: "inline-block",
+                  width: "24px",
+                  textAlign: "left",
+                }}
+              >
+                <span
+                  style={{
+                    animation: "loadingDots 1.5s infinite",
+                    animationDelay: "0s",
+                    marginLeft: "3px",
+                  }}
+                >
+                  .
+                </span>
+                <span
+                  style={{
+                    animation: "loadingDots 1.5s infinite",
+                    animationDelay: "0.3s",
+                  }}
+                >
+                  .
+                </span>
+                <span
+                  style={{
+                    animation: "loadingDots 1.5s infinite",
+                    animationDelay: "0.6s",
+                  }}
+                >
+                  .
+                </span>
+              </span>
+            </div>
+          </div>
+        </div>
       )}
 
       {error && (
-        <p
+        <div
           className="error"
           style={{
             color: "red",
             textAlign: "center",
             margin: "20px auto",
+            padding: "10px 15px",
+            borderRadius: "8px",
+            backgroundColor: "rgba(255, 0, 0, 0.1)",
+            border: "1px solid rgba(255, 0, 0, 0.3)",
+            fontSize: "14px",
+            fontWeight: "500",
+            display: "flex",
+            alignItems: "center",
+            gap: "10px",
           }}
         >
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="red"
+            strokeWidth="2"
+          >
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
           {error}
-        </p>
+        </div>
       )}
 
       <div
@@ -221,8 +320,38 @@ const AnimatedSVG = ({
           width: "100%",
           height: "100%",
           margin: "0 auto",
+          opacity: loading ? 0 : 1,
+          transition: "opacity 0.3s ease-in-out",
         }}
       ></div>
+
+      <style>{`
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+        
+        @keyframes pulse {
+          0%, 100% { opacity: 0.8; }
+          50% { opacity: 0.4; }
+        }
+        
+        @keyframes loadingDots {
+          0%, 100% { opacity: 0.2; transform: translateY(0px); }
+          50% { opacity: 1; transform: translateY(-2px); }
+        }
+        
+        @keyframes ripple {
+          0% { transform: scale(0); opacity: 1; }
+          100% { transform: scale(1); opacity: 0; }
+        }
+        
+        .spinner-rings {
+          position: relative;
+          width: 40px;
+          height: 40px;
+        }
+      `}</style>
     </div>
   );
 };
