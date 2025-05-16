@@ -6,7 +6,6 @@ const webpack = require("webpack");
 const Dotenv = require("dotenv-webpack");
 
 const isProduction = process.env.NODE_ENV === "production";
-// Read the public path from environment variables with fallback for GitHub Pages
 const publicPath = process.env.PUBLIC_PATH || (isProduction ? "/c-v/" : "/");
 
 module.exports = {
@@ -97,7 +96,6 @@ module.exports = {
       filename: "index.html",
       inject: "body",
       minify: false,
-      // Add base href tag for GitHub Pages
       templateParameters: {
         PUBLIC_PATH: publicPath,
       },

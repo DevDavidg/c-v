@@ -2,26 +2,24 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches:
-      - master
-      - main
+    branches: [main, master]
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
 
+# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
 permissions:
-  contents: write
+  contents: read
   pages: write
   id-token: write
 
-# Cancel running deployments
+# Allow only one concurrent deployment
 concurrency:
   group: "pages"
   cancel-in-progress: true
 
 jobs:
-  build-and-deploy:
+  build:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -35,60 +33,32 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Create .nojekyll file
-        run: touch .nojekyll
-
       - name: Build
         run: |
-          # Set the environment variable for the build
-          export PUBLIC_PATH=/c-v/
+          # Create a simple .nojekyll file
+          touch .nojekyll
 
-          # Create a production build with webpack
-          NODE_ENV=production npm run build
+          # Create production build
+          NODE_ENV=production PUBLIC_PATH=/c-v/ npm run build
 
-          # Create .nojekyll file to disable Jekyll processing
+          # Create .nojekyll in the build directory
           touch dist/.nojekyll
-
-          # Ensure 404.html exists for SPA routing
-          cp public/404.html dist/ || echo "No 404.html found, creating one"
-          if [ ! -f "dist/404.html" ]; then
-            cat > dist/404.html << 'EOF'
-            <!DOCTYPE html>
-            <html>
-            <head>
-              <meta charset="utf-8">
-              <title>Page Not Found</title>
-              <script>
-                // Single Page Apps for GitHub Pages
-                // MIT License
-                // https://github.com/rafgraph/spa-github-pages
-                var pathSegmentsToKeep = 1;
-                var l = window.location;
-                l.replace(
-                  l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') +
-                  l.pathname.split('/').slice(0, 1 + pathSegmentsToKeep).join('/') + '/?/' +
-                  l.pathname.slice(1).split('/').slice(pathSegmentsToKeep).join('/').replace(/&/g, '~and~') +
-                  (l.search ? '&' + l.search.slice(1).replace(/&/g, '~and~') : '') +
-                  l.hash
-                );
-              </script>
-            </head>
-            <body>
-              <h1>Page Not Found</h1>
-              <p>Redirecting to home page...</p>
-            </body>
-            </html>
-            EOF
-          fi
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
-      - name: Upload Pages artifact
+      - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: "dist"
+          path: "./dist"
 
+  deploy:
+    needs: build
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
